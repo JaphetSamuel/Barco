@@ -1,4 +1,4 @@
-﻿using Barco.Librairie.Domain.AggregateRoots;
+using Barco.Librairie.Domain.AggregateRoots;
 using Barco.Librairie.Domain.Entities;
 using Barco.Librairie.Domain.ValueObjects;
 using FluentResults;
@@ -44,9 +44,46 @@ namespace Barco.Librairie.Application.Services
 
             var result = account.Deposit(amount);
             if (result.IsSuccess)
+            {
                 await _unitOfWork.SaveChangesAsync();
+            }
 
             return result;
+        }
+
+        public async Task<Result<Transaction>> WithdrawAsync(
+            AccountId accountId,
+            Money amount)
+        {
+            var account = await _accountRepository.GetByIdAsync(accountId);
+            if (account == null)
+                return Result.Fail<Transaction>("Account not found");
+
+            var result = account.Withdraw(amount);
+            if (result.IsSuccess)
+            {
+                await _unitOfWork.SaveChangesAsync();
+            }
+
+            return result;
+        }
+
+        public async Task<Result<Money>> GetAccountBalanceAsync(AccountId accountId)
+        {
+            var account = await _accountRepository.GetByIdAsync(accountId);
+            if (account == null)
+                return Result.Fail<Money>("Account not found");
+
+            return Result.Ok(account.Balance);
+        }
+
+        public async Task<Result<AccountStatus>> GetAccountStatusAsync(AccountId accountId)
+        {
+            var account = await _accountRepository.GetByIdAsync(accountId);
+            if (account == null)
+                return Result.Fail<AccountStatus>("Account not found");
+
+            return Result.Ok(account.Status);
         }
     }
 }
